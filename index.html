@@ -57,7 +57,7 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
 .modobtn[hidden] { display: none; }
 body.publico .pickbtn, body.publico .pick { display: none !important; }
 body.publico li.is-pick .t::after { content: none !important; }
-body.previa .est button { pointer-events: none; }
+
 .brand { display: flex; align-items: center; gap: 14px; }
 .mark { width: 52px; height: 52px; flex: none; }
 .brand-t { display: flex; flex-direction: column; line-height: 1; }
@@ -428,8 +428,8 @@ function estrelasHtml(i) {
   return h;
 }
 function nomeUI() {
-  $("#nomebox").hidden = !!nome;
-  $("#quem").hidden = !nome;
+  $("#nomebox").hidden = !window.PUBLICO || !!nome;
+  $("#quem").hidden = !window.PUBLICO || !nome;
   $("#quem").innerHTML = nome ? `Oi, ${esc(nome)}. <button type="button" id="trocar">Não sou eu</button>` : "";
 }
 async function carregarMedias() {
@@ -437,11 +437,15 @@ async function carregarMedias() {
 }
 const REAL = !!window.PUBLICO;
 if (REAL || window.PESSOAL) carregarMedias();
-if (REAL) {
+async function carregarMinhas() {
+  if (!nome) return;
+  try { const r = await fetch(API + "/meus?nome=" + encodeURIComponent(nome)); if (r.ok) { minhas = await r.json(); ls.set("frl-cinema-minhas", JSON.stringify(minhas)); render(); } } catch (e) {}
+}
+if (REAL || window.PESSOAL) {
   nome = ls.get("frl-cinema-nome") || "";
   try { minhas = JSON.parse(ls.get("frl-cinema-minhas") || "{}"); } catch (e) { minhas = {}; }
-  nomeUI();
-  const entrar = () => { const v = $("#nome").value.trim(); if (!v) return; nome = v; ls.set("frl-cinema-nome", v); nomeUI(); };
+  nomeUI(); carregarMinhas();
+  const entrar = () => { const v = $("#nome").value.trim(); if (!v) return; nome = v; ls.set("frl-cinema-nome", v); nomeUI(); carregarMinhas(); };
   $("#nome-ok").addEventListener("click", entrar);
   $("#nome").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
   document.addEventListener("click", (e) => { if (e.target.id === "trocar") { nome = ""; ls.set("frl-cinema-nome", ""); minhas = {}; ls.set("frl-cinema-minhas", "{}"); nomeUI(); render(); $("#nome").focus(); } });
@@ -462,7 +466,7 @@ if (REAL) {
 function setModo(pub) {
   window.PUBLICO = pub;
   document.body.classList.toggle("publico", pub);
-  document.body.classList.toggle("previa", pub && !REAL);
+  nomeUI();
   votos = pub ? {} : votosReal;
   if (pub && view === "vistos") view = "quero-ver";
   $("#tab-vis").hidden = pub || !db;
