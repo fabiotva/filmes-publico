@@ -138,6 +138,21 @@ details:not(.pick-on) li.is-pick .t::after { content: none; }
 .vtag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--bronze); background: var(--bronze-soft); border-radius: 99px; padding: 2px 10px; }
 .vnote { font-size: 13px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
 li.visto .t { opacity: .75; }
+.nomebox { margin: 18px 0 0; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.nomebox[hidden] { display: none; }
+.nomebox b { font-size: 15px; }
+.nomebox span { font-size: 13px; color: var(--muted); }
+.nomebox .row { display: flex; gap: 8px; }
+.nomebox input { flex: 1; min-width: 0; font: 400 16px var(--font); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 44px; }
+.nomebox button { font: 700 14px var(--font); min-height: 44px; padding: 8px 16px; border-radius: 99px; background: var(--hero); color: var(--hero-ink); border: 0; cursor: pointer; }
+.quem { margin: 14px 2px 0; font-size: 13px; color: var(--muted); }
+.quem[hidden] { display: none; }
+.quem button { font: 600 13px var(--font); color: var(--bronze); background: none; border: 0; padding: 4px 6px; cursor: pointer; text-decoration: underline; }
+.est { display: flex; align-items: center; gap: 2px; margin-top: 8px; flex-wrap: wrap; }
+.est button { font-size: 26px; line-height: 1; width: 40px; height: 40px; background: none; border: 0; padding: 0; cursor: pointer; color: var(--line); }
+.est button.on { color: var(--bronze); }
+.est .media { font-size: 13px; color: var(--muted); margin-left: 6px; }
+.est .media b { color: var(--bronze); font-weight: 700; }
 footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: center; }
 @media (prefers-reduced-motion: no-preference) { .chev { transition: transform .15s; } }
 </style>
@@ -170,6 +185,12 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
     </div>
     <input class="search" id="busca" type="search" placeholder="Buscar por título ou país" aria-label="Buscar">
   </div>
+  <div class="nomebox" id="nomebox" hidden>
+    <b>Qual é o seu nome?</b>
+    <span>Assim eu sei quem está usando e você pode dar de 1 a 5 estrelas nos filmes.</span>
+    <div class="row"><input id="nome" type="text" maxlength="60" autocomplete="given-name" placeholder="Seu nome" aria-label="Seu nome"><button type="button" id="nome-ok">Entrar</button></div>
+  </div>
+  <p class="quem" id="quem" hidden></p>
   <p class="aviso" id="aviso"></p>
   <div id="lista" role="tabpanel"></div>
   <footer>Atualizado em 2026-11-13. Notas do IMDb escritas de memória, sem conferir.</footer>
@@ -342,7 +363,7 @@ function render() {
           extra += `<div><button type="button" class="vistobtn" data-abrir="${id}" data-titulo="${esc(i[0])}">${vt ? "Mudar voto" : "Já vi"}</button></div>`;
         }
       }
-      return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${descr(i) ? `<div class="d">${esc(descr(i))}</div>` : ""}${extra}</li>`;
+      return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${descr(i) ? `<div class="d">${esc(descr(i))}</div>` : ""}${window.PUBLICO && view !== "vistos" ? estrelasHtml(i) : ""}${extra}</li>`;
     }).join("") + "</ul></details>";
   }
   $("#lista").innerHTML = total ? html : '<p class="empty">Nada encontrado.</p>';
@@ -388,6 +409,47 @@ $("#lista").addEventListener("click", async (e) => {
   } catch (err) { alert("Não consegui salvar o voto agora. Tente de novo."); return; }
   render();
 });
+
+// Estrelas das clientes (só na versão pública): nome e nota vão pro Worker frl-filmes; a média volta pra todo mundo.
+const API = "https://frl-filmes.fichas-frl.workers.dev";
+let nome = "", minhas = {}, medias = {};
+const ls = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+function estrelasHtml(i) {
+  const id = slug(i[0]), m = medias[id], mine = minhas[id] || 0;
+  let h = `<div class="est" data-id="${id}" data-titulo="${esc(i[0])}" role="group" aria-label="Estrelas para ${esc(i[0])}">`;
+  for (let n = 1; n <= 5; n++) h += `<button type="button" data-n="${n}" class="${n <= mine ? "on" : ""}" aria-label="${n} estrela${n > 1 ? "s" : ""}">★</button>`;
+  h += `<span class="media">${m ? `<b>${String(m.m).replace(".", ",")}</b> · ${m.n} ${m.n > 1 ? "notas" : "nota"}` : "Sem notas ainda"}</span></div>`;
+  return h;
+}
+function nomeUI() {
+  $("#nomebox").hidden = !!nome;
+  $("#quem").hidden = !nome;
+  $("#quem").innerHTML = nome ? `Oi, ${esc(nome)}. <button type="button" id="trocar">Não sou eu</button>` : "";
+}
+async function carregarMedias() {
+  try { const r = await fetch(API + "/medias"); if (r.ok) { medias = await r.json(); render(); } } catch (e) {}
+}
+if (window.PUBLICO) {
+  nome = ls.get("frl-cinema-nome") || "";
+  try { minhas = JSON.parse(ls.get("frl-cinema-minhas") || "{}"); } catch (e) { minhas = {}; }
+  nomeUI(); carregarMedias();
+  const entrar = () => { const v = $("#nome").value.trim(); if (!v) return; nome = v; ls.set("frl-cinema-nome", v); nomeUI(); };
+  $("#nome-ok").addEventListener("click", entrar);
+  $("#nome").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
+  document.addEventListener("click", (e) => { if (e.target.id === "trocar") { nome = ""; ls.set("frl-cinema-nome", ""); minhas = {}; ls.set("frl-cinema-minhas", "{}"); nomeUI(); render(); $("#nome").focus(); } });
+  $("#lista").addEventListener("click", async (e) => {
+    const b = e.target.closest(".est button");
+    if (!b) return;
+    if (!nome) { window.scrollTo({ top: 0, behavior: "smooth" }); $("#nome").focus(); return; }
+    const box = b.closest(".est"), id = box.dataset.id, n = Number(b.dataset.n);
+    try {
+      const r = await fetch(API + "/voto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome, filme: id, titulo: box.dataset.titulo, estrelas: n }) });
+      if (!r.ok) throw new Error();
+      minhas[id] = n; ls.set("frl-cinema-minhas", JSON.stringify(minhas));
+      await carregarMedias(); render();
+    } catch (err) { alert("Não consegui salvar sua nota agora. Tente de novo."); }
+  });
+}
 const VIEWS = ["quero-ver", "indicar", "vistos"];
 window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (VIEWS.includes(h) && (h !== "vistos" || db)) setView(h, true); });
 { const h = location.hash.slice(1); setView(h === "indicar" ? h : "quero-ver", true); }
@@ -398,20 +460,6 @@ window.addEventListener("hashchange", () => { const h = location.hash.slice(1); 
     if (!c) return;
     db = c;
     $("#tab-vis").hidden = false;
-    db.collection("votos").onSnapshot((snap) => {
-      const m = {};
-      snap.forEach((d) => { m[d.id] = d.data(); });
-      votos = m; render();
-    }, () => {});
-    render();
-  } catch (e) { db = null; }
-})();
-// Votos: só aparecem pra quem pode gravar (o dono). Sem o banco, a página funciona igual, sem os botões.
-(async () => {
-  try {
-    const c = window.claude && (await claude.use("db"));
-    if (!c) return;
-    db = c;
     db.collection("votos").onSnapshot((snap) => {
       const m = {};
       snap.forEach((d) => { m[d.id] = d.data(); });
