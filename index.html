@@ -1,0 +1,409 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<style>.pickbtn,.pick{display:none!important}li.is-pick .t::after{content:none!important}</style>
+<title>FRL Cinema</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#3A3D43">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="FRL Cinema">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%233A3D43'/%3E%3Crect x='34' y='48' width='112' height='84' rx='12' fill='none' stroke='%23F1EFEB' stroke-width='7'/%3E%3Cpath d='M78 70v40l34-20z' fill='%23C99763'/%3E%3Cg fill='%23F1EFEB'%3E%3Crect x='46' y='56' width='8' height='8' rx='2'/%3E%3Crect x='46' y='86' width='8' height='8' rx='2'/%3E%3Crect x='46' y='116' width='8' height='8' rx='2'/%3E%3Crect x='126' y='56' width='8' height='8' rx='2'/%3E%3Crect x='126' y='86' width='8' height='8' rx='2'/%3E%3Crect x='126' y='116' width='8' height='8' rx='2'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%233A3D43'/%3E%3Crect x='34' y='48' width='112' height='84' rx='12' fill='none' stroke='%23F1EFEB' stroke-width='7'/%3E%3Cpath d='M78 70v40l34-20z' fill='%23C99763'/%3E%3Cg fill='%23F1EFEB'%3E%3Crect x='46' y='56' width='8' height='8' rx='2'/%3E%3Crect x='46' y='86' width='8' height='8' rx='2'/%3E%3Crect x='46' y='116' width='8' height='8' rx='2'/%3E%3Crect x='126' y='56' width='8' height='8' rx='2'/%3E%3Crect x='126' y='86' width='8' height='8' rx='2'/%3E%3Crect x='126' y='116' width='8' height='8' rx='2'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: cabeçalho escuro em grafite com o logo e a contagem, abas em pílula, gêneros em cartões com fio de bronze.
+   Cores da marca FRL: grafite, pedra clara, pedra e bronze. Fonte Figtree. */
+:root {
+  --bg: #F1EFEB;
+  --surface: #FBFAF8;
+  --ink: #3A3D43;
+  --muted: #6B6F77;
+  --line: #D3CEC5;
+  --bronze: #9B6A3C;
+  --bronze-soft: #EADFD0;
+  --hero: #3A3D43;
+  --hero-ink: #F1EFEB;
+  --hero-muted: #C9C5BC;
+  --hero-accent: #C99763;
+  --font: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #2A2D32; --surface: #34373D; --ink: #F1EFEB; --muted: #B9B5AC; --line: #474B53;
+    --bronze: #C99763; --bronze-soft: #433A2F; --hero: #3A3D43; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #2A2D32; --surface: #34373D; --ink: #F1EFEB; --muted: #B9B5AC; --line: #474B53;
+  --bronze: #C99763; --bronze-soft: #433A2F; --hero: #3A3D43; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font); font-size: 16px; line-height: 1.5; margin: 0;
+  padding-block: 0 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); background: var(--hero); z-index: 10; }
+.wrap { max-width: 640px; margin: 0 auto; }
+
+/* cabeçalho */
+.hero {
+  background: var(--hero); color: var(--hero-ink);
+  margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 26px max(16px, env(safe-area-inset-left, 0px)) 76px;
+}
+.hero-in { max-width: 640px; margin: 0 auto; }
+.brand { display: flex; align-items: center; gap: 14px; }
+.mark { width: 52px; height: 52px; flex: none; }
+.brand-t { display: flex; flex-direction: column; line-height: 1; }
+.brand-t b { font-weight: 700; font-size: 26px; letter-spacing: .28em; margin-right: -.28em; }
+.brand-t span { font-weight: 600; font-size: 11px; letter-spacing: .34em; margin-top: 7px; color: var(--hero-accent); text-transform: uppercase; }
+.hero h1 { font-size: 25px; line-height: 1.2; font-weight: 700; margin: 26px 0 0; text-wrap: balance; }
+.hero p { margin: 6px 0 0; color: var(--hero-muted); font-size: 15px; }
+
+/* abas e busca */
+.ctl { margin-top: -50px; display: flex; flex-direction: column; gap: 10px; }
+.tabs {
+  display: flex; gap: 4px; padding: 4px; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(58,61,67,.14);
+}
+.tabs button[hidden] { display: none; }
+.tabs button {
+  flex: 1; font: 600 15px var(--font); color: var(--muted); background: transparent; border: 0; border-radius: 12px;
+  min-height: 48px; padding: 8px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.tabs button .n { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--bronze-soft); color: var(--bronze); font-variant-numeric: tabular-nums; }
+.tabs button[aria-selected="true"] { background: var(--hero); color: var(--hero-ink); }
+.tabs button[aria-selected="true"] .n { background: var(--hero-accent); color: #3A3D43; }
+.search {
+  width: 100%; font: 400 16px var(--font); color: var(--ink); background: var(--surface);
+  border: 1px solid var(--line); border-radius: 14px; padding: 13px 16px; min-height: 48px;
+}
+.search::placeholder { color: var(--muted); }
+:focus-visible { outline: 2px solid var(--bronze); outline-offset: 2px; }
+.aviso { margin: 18px 2px 14px; font-size: 14px; color: var(--muted); }
+
+/* gêneros */
+#lista { display: flex; flex-direction: column; gap: 12px; }
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 12px 16px;
+  font-weight: 700; font-size: 17px;
+}
+summary::-webkit-details-marker { display: none; }
+summary .g { flex: 1; min-width: 0; }
+summary .count { font-size: 12px; font-weight: 700; color: var(--bronze); background: var(--bronze-soft); border-radius: 99px; padding: 2px 9px; font-variant-numeric: tabular-nums; }
+summary .chev { width: 10px; height: 10px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg); margin-right: 4px; }
+details[open] > summary .chev { transform: rotate(-135deg); margin-top: 5px; }
+.gnote { margin: 0; padding: 0 16px 10px; font-size: 13px; color: var(--muted); }
+ul { list-style: none; margin: 0; padding: 0; }
+li { padding: 13px 16px 14px; border-top: 1px solid var(--line); min-width: 0; }
+.t { font-weight: 600; font-size: 16px; line-height: 1.3; overflow-wrap: anywhere; }
+.m { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 5px; font-size: 13px; color: var(--muted); }
+.rate { font-weight: 700; color: var(--bronze); background: var(--bronze-soft); border-radius: 99px; padding: 1px 9px; font-variant-numeric: tabular-nums; }
+.d { font-size: 14px; margin-top: 6px; color: var(--ink); opacity: .86; overflow-wrap: anywhere; }
+.empty { text-align: center; color: var(--muted); padding: 28px 0; }
+.pickbtn {
+  font: 700 12px var(--font); color: var(--hero-ink); background: var(--hero); border: 0; border-radius: 99px;
+  padding: 7px 12px 7px 10px; min-height: 32px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.pickbtn::before { content: ""; border-left: 8px solid var(--hero-accent); border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+.pick { margin: 0 12px 10px; padding: 12px 14px; border-radius: 12px; background: var(--hero); color: var(--hero-ink); display: flex; flex-direction: column; gap: 4px; }
+.pick small { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--hero-accent); }
+.pick b { font-size: 17px; line-height: 1.3; }
+.pick span { font-size: 14px; color: var(--hero-muted); }
+li.is-pick .t::after { content: "Comece por este"; margin-left: 8px; font-size: 11px; font-weight: 700; color: var(--bronze); background: var(--bronze-soft); border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+li:not(.is-pick) .t::after { content: none; }
+details:not(.pick-on) li.is-pick .t::after { content: none; }
+.vistobtn {
+  font: 600 13px var(--font); color: var(--bronze); background: transparent; border: 1px solid var(--bronze); border-radius: 99px;
+  min-height: 36px; padding: 6px 14px; cursor: pointer; margin-top: 10px;
+}
+.vote { margin-top: 10px; padding: 12px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.vote .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.vote .opts button {
+  font: 600 13px var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  min-height: 48px; padding: 8px 10px; cursor: pointer; text-align: left; line-height: 1.25;
+}
+.vote .opts button[aria-pressed="true"] { background: var(--hero); color: var(--hero-ink); border-color: var(--hero); }
+.vote textarea {
+  width: 100%; font: 400 15px var(--font); color: var(--ink); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 10px 12px; min-height: 64px; resize: vertical;
+}
+.vote .acts { display: flex; gap: 8px; flex-wrap: wrap; }
+.vote .acts button { font: 700 14px var(--font); min-height: 44px; padding: 8px 16px; border-radius: 99px; cursor: pointer; }
+.vote .save { background: var(--hero); color: var(--hero-ink); border: 0; }
+.vote .save:disabled { opacity: .4; cursor: default; }
+.vote .cancel, .vote .clear { background: transparent; color: var(--muted); border: 1px solid var(--line); }
+.vtag { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--bronze); background: var(--bronze-soft); border-radius: 99px; padding: 2px 10px; }
+.vnote { font-size: 13px; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; }
+li.visto .t { opacity: .75; }
+footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: center; }
+@media (prefers-reduced-motion: no-preference) { .chev { transition: transform .15s; } }
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-in">
+      <div class="brand">
+        <svg class="mark" viewBox="0 0 180 180" role="img" aria-label="Logo de filme">
+          <rect width="180" height="180" rx="40" fill="#F1EFEB" fill-opacity=".1"/>
+          <rect x="34" y="48" width="112" height="84" rx="12" fill="none" stroke="#F1EFEB" stroke-width="7"/>
+          <path d="M78 70v40l34-20z" fill="#C99763"/>
+          <g fill="#F1EFEB">
+            <rect x="46" y="56" width="8" height="8" rx="2"/><rect x="46" y="86" width="8" height="8" rx="2"/><rect x="46" y="116" width="8" height="8" rx="2"/>
+            <rect x="126" y="56" width="8" height="8" rx="2"/><rect x="126" y="86" width="8" height="8" rx="2"/><rect x="126" y="116" width="8" height="8" rx="2"/>
+          </g>
+        </svg>
+        <div class="brand-t"><b>FRL</b><span>Cinema</span></div>
+      </div>
+      <h1>Filmes pra ver e pra indicar</h1>
+      <p id="resumo"></p>
+    </div>
+  </header>
+
+  <div class="ctl">
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-view="quero-ver">Quero ver <span class="n" id="n-ver"></span></button>
+      <button role="tab" aria-selected="false" data-view="indicar">Indicar <span class="n" id="n-ind"></span></button>
+      <button role="tab" aria-selected="false" data-view="vistos" id="tab-vis" hidden>Vistos <span class="n" id="n-vis"></span></button>
+    </div>
+    <input class="search" id="busca" type="search" placeholder="Buscar por título ou país" aria-label="Buscar">
+  </div>
+  <p class="aviso" id="aviso"></p>
+  <div id="lista" role="tabpanel"></div>
+  <footer>Atualizado em 2026-11-13. Notas do IMDb escritas de memória, sem conferir.</footer>
+</div>
+
+<script>
+const DATA = {
+  "quero-ver": {
+    aviso: "O que ainda quero assistir, por gênero.",
+    grupos: [
+      { nome: "Terror", pick: ["Oddity", "A melhor crítica que sobrou na lista, entre 96% e 98% no Rotten Tomatoes."], itens: [
+        ["Lake Mungo", "Austrália, 2008", "", ""],
+        ["Saint Maud", "Reino Unido, 2019", "", ""],
+        ["O Faro do Medo (The Wailing)", "Coreia do Sul, 2016", "", ""],
+        ["Oddity", "Irlanda, 2024", "IMDb ~6,7", "Crítica de 96% a 98% no Rotten Tomatoes."]
+      ]},
+      { nome: "Ação", pick: ["Kill", "A melhor nota do gênero na lista e ação brutal do começo ao fim, quase toda dentro de um trem."], itens: [
+        ["Kill", "Índia, 2023", "IMDb ~7,6", "Brutal, quase todo dentro de um trem."],
+        ["O Homem do Futuro (The Man from Nowhere)", "Coreia do Sul, 2010", "IMDb ~7,8", ""],
+        ["The Night Comes for Us", "Indonésia, 2018", "IMDb ~7,0", "Bem sangrento."]
+      ]},
+      { nome: "Thriller de investigação", pick: ["The Guilty (Den Skyldige)", "Rápido, de investigação e sem violência pesada, do jeito que você pediu."], itens: [
+        ["The Guilty (Den Skyldige)", "Dinamarca, 2018", "IMDb ~7,5", "O mais ágil."],
+        ["La Isla Mínima", "Espanha, 2014", "IMDb ~7,5", ""]
+      ]},
+      { nome: "Suspense sobrenatural", pick: ["Durante a Tempestade (Mirage)", "O mais seguro pra ver com cliente: mistério e emoção, sem susto."], nota: "Para ver com cliente que não gosta de terror.", itens: [
+        ["Durante a Tempestade (Mirage)", "Espanha, 2018", "IMDb ~7,0", "O mais seguro, sem susto. Bom para começar."],
+        ["O Segredo de Marrowbone", "Espanha e EUA, 2017", "IMDb ~6,9", ""],
+        ["O Orfanato", "Espanha, 2007", "IMDb ~7,4", "Tem alguns sustos. Evitar se ela for sensível."],
+        ["The Awakening (O Despertar)", "Reino Unido, 2011", "IMDb ~6,4", "Vi trabalhando e perdi partes. Talvez reveja."]
+      ]},
+      { nome: "Romance de época", pick: ["Norte e Sul (North & South)", "A melhor nota da lista e são só 4 episódios."], itens: [
+        ["Norte e Sul (North & South)", "Série da BBC, 2004", "IMDb ~8,7", "4 episódios. Estilo Orgulho e Preconceito."],
+        ["Amor e Inocência (Love & Friendship)", "Irlanda e França, 2016", "IMDb ~6,5", "Comédia de época, de um livro menos conhecido da Austen."],
+        ["Bright Star", "Reino Unido e Austrália, 2009", "IMDb ~7,0", "Lento e bonito."]
+      ]},
+      { nome: "Comédia romântica", pick: ["The Lunchbox", "A melhor nota do gênero, e emociona, como o Doentes de Amor que você gostou."], itens: [
+        ["In Your Eyes", "EUA, 2014", "IMDb ~7,0", "Dois desconhecidos sentem o que o outro sente. Roteiro de Joss Whedon."],
+        ["The Lunchbox", "Índia, 2013", "IMDb ~7,8", "A marmita chega ao homem errado e os dois trocam bilhetes."],
+        ["Man Up: Encontro Perfeito", "Reino Unido, 2015", "IMDb ~6,9", "Leve e rápido."]
+      ]},
+      { nome: "Loop temporal e viagem no tempo", pick: ["Crimes Temporais (Los Cronocrímenes)", "O de melhor crítica dos quatro, curto e tenso."], itens: [
+        ["Crimes Temporais (Los Cronocrímenes)", "Espanha, 2007", "IMDb ~7,1", "Um homem entra numa máquina do tempo, volta uma hora e cria um paradoxo. Tenso e enxuto."],
+        ["O Predestinado (Predestination)", "Austrália, 2014", "IMDb ~7,4", "Um agente temporal faz a última viagem e se envolve num quebra-cabeça sobre destino e identidade. Pede atenção."],
+        ["Russian Doll", "Série, EUA, 2019", "IMDb ~7,8", "Uma mulher morre e acorda sempre na mesma festa. Humor ácido, 2 temporadas."]
+      ]}
+    ]
+  },
+  "indicar": {
+    aviso: "O que já vi, gostei e indico quando alguém pergunta.",
+    grupos: [
+      { nome: "Romance e comédia romântica", itens: [
+        ["Doentes de Amor (The Big Sick)", "EUA, 2017", "IMDb ~7,5", "Comédia romântica que emociona, baseada numa história real. Cerca de 98% no Rotten Tomatoes."],
+        ["Doce Novembro (Sweet November)", "EUA, 2001", "", "Romance dramático, desses que fazem chorar. A crítica foi ruim e o público ficou no meio; indico pelo meu gosto."],
+        ["Palm Springs", "EUA, 2020", "IMDb ~7,4", "Dois convidados de um casamento presos no mesmo dia, que se repete. Muito bom, acho que muita gente vai gostar."]
+      ]},
+      { nome: "Ação e faroeste", itens: [
+        ["A Ladra Solitária (The Isolate Thief)", "EUA, 2026", "", "Faroeste de suspense na Guerra Civil, com Mackenzie Foy e Sean Bean. A crítica ficou dividida. É violento, avisar quem for ver."],
+        ["Sisu", "Finlândia, 2022", "IMDb ~6,9", "Ação brutal e o mais leve dos de ação. Já tinha visto e gosto."]
+      ]},
+      { nome: "Terror e ação com comédia", itens: [
+        ["Resident Evil", "EUA, 2026", "", "Direção de Zach Cregger. Parece videogame, com um pouco de comédia. Entre 96% e 97% no Rotten Tomatoes."],
+        ["Deixa Ela Entrar (Let the Right One In)", "Suécia, 2008", "IMDb ~7,9", "Terror com uma vampira criança. Revi e achei muito bom, vale a pena."],
+        ["A Morte Te Dá Parabéns (Happy Death Day)", "EUA, 2017", "IMDb ~6,6", "Slasher com humor e loop temporal. O 1 é legal mas previsível; o 2 melhora o 1. Ver os dois."]
+      ]},
+      { nome: "Thriller de investigação", itens: [
+        ["Contratiempo (The Invisible Guest)", "Espanha, 2016", "IMDb ~8,0", "Muito bom mesmo. Roteiro bacana e bons atores."]
+      ]}
+    ]
+  }
+};
+
+// Filmes que já vi (aba Vistos). O quinto campo é o voto.
+const VISTOS = [
+  ["Doce Novembro (Sweet November)", "EUA, 2001", "", "Tearjerker. A crítica foi ruim; indico pelo meu gosto.", "indicar"],
+  ["Doentes de Amor (The Big Sick)", "EUA, 2017", "IMDb ~7,5", "Comédia romântica emocionante, um filme bom.", "indicar"],
+  ["A Ladra Solitária (The Isolate Thief)", "EUA, 2026", "", "Gostei muito. É violento, avisar quem for ver.", "indicar"],
+  ["Resident Evil", "EUA, 2026", "", "Parece videogame, com um pouco de comédia.", "indicar"],
+  ["Palm Springs", "EUA, 2020", "IMDb ~7,4", "Muito bom. Acho que muita gente vai gostar, mesmo que eu ache que não é pra mim.", "indicar"],
+  ["Bela Vingança (Promising Young Woman)", "EUA, 2020", "IMDb ~7,5", "Bom roteiro, cheio de reviravolta e inteligente. Mas passa a ideia de que nenhum homem presta, nem os bonzinhos. Não indico pra quem já pensa assim, porque só reforçaria. É só um filme.", "gostei"],
+  ["Não Fale o Mal (Speak No Evil)", "Dinamarca, 2022", "", "Achei normal, nem ruim nem bom.", "indiferente"],
+  ["Sisu", "Finlândia, 2022", "IMDb ~6,9", "Já tinha visto e gosto.", "indicar"],
+  ["Deixa Ela Entrar (Let the Right One In)", "Suécia, 2008", "IMDb ~7,9", "Revi e achei muito bom. Na primeira vez não me marcou.", "indicar"],
+  ["Contratiempo (The Invisible Guest)", "Espanha, 2016", "IMDb ~8,0", "Muito bom mesmo. Roteiro bacana e bons atores.", "indicar"],
+  ["A Morte Te Dá Parabéns (Happy Death Day)", "EUA, 2017", "IMDb ~6,6", "O 1 é legal mas previsível; o 2 melhora o 1. Ver os dois.", "indicar"],
+  ["Sob a Sombra (Under the Shadow)", "Irã e Reino Unido, 2016", "IMDb ~6,9", "Achei mediano, um filme normal.", "indiferente"],
+  ["O Segredo dos Seus Olhos", "Argentina, 2009", "", "Vi duas vezes e não achei tudo isso. Pareceu muito cabeça.", "indiferente"]
+];
+const $ = (s) => document.querySelector(s);
+let view = "quero-ver";
+const VOTOS = { indicar: "Vi, gostei e indico", gostei: "Vi e gostei (não indico)", indiferente: "Vi, indiferente", "nao-gostei": "Vi e não gostei" };
+let db = null, votos = {}, aberto = null, rascunho = { voto: "", nota: "", titulo: "" };
+const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+const count = (k) => DATA[k].grupos.reduce((n, g) => n + g.itens.length, 0);
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+
+$("#n-ind").textContent = count("indicar");
+
+function visao() {
+  const ver = DATA["quero-ver"];
+  if (view === "indicar") {
+    const SEG = { "Comédia romântica": "Romance e comédia romântica", "Romance de época": "Romance e comédia romântica", "Ação": "Ação e faroeste", "Terror": "Terror e ação com comédia" };
+    const grupos = DATA.indicar.grupos.map((g) => ({ ...g, itens: [...g.itens] }));
+    for (const g of ver.grupos) {
+      for (const i of g.itens) {
+        if (!(votos[slug(i[0])] && votos[slug(i[0])].voto === "indicar")) continue;
+        const nome = SEG[g.nome] || g.nome;
+        let alvo = grupos.find((x) => x.nome === nome);
+        if (!alvo) { alvo = { nome, itens: [] }; grupos.push(alvo); }
+        alvo.itens.push(i);
+      }
+    }
+    return { aviso: DATA.indicar.aviso, grupos };
+  }
+  if (view === "quero-ver") {
+    return { aviso: ver.aviso, grupos: ver.grupos.map((g) => ({ ...g, pick: g.pick && !votos[slug(g.pick[0])] ? g.pick : undefined, itens: g.itens.filter((i) => !votos[slug(i[0])]) })) };
+  }
+  const todos = ver.grupos.flatMap((g) => g.itens);
+  return {
+    aviso: "O que já assisti, com o meu voto.",
+    grupos: Object.entries(VOTOS).map(([k, r]) => ({ nome: r, itens: [...VISTOS.filter((i) => i[4] === k), ...todos.filter((i) => votos[slug(i[0])] && votos[slug(i[0])].voto === k)] }))
+  };
+}
+function contadores() {
+  const ver = DATA["quero-ver"].grupos.flatMap((g) => g.itens);
+  const vistos = ver.filter((i) => votos[slug(i[0])]).length;
+  $("#n-ver").textContent = ver.length - vistos;
+  $("#n-vis").textContent = vistos + VISTOS.length;
+  $("#n-ind").textContent = count("indicar") + ver.filter((i) => votos[slug(i[0])] && votos[slug(i[0])].voto === "indicar").length;
+  $("#resumo").textContent = (ver.length - vistos) + " pra assistir e " + count("indicar") + " que eu indico.";
+}
+
+function render() {
+  const q = norm($("#busca").value.trim());
+  const v = visao();
+  contadores();
+  $("#aviso").textContent = v.aviso;
+  let html = "", total = 0;
+  for (const g of v.grupos) {
+    const itens = g.itens.filter((i) => !q || norm(i[0] + " " + i[1]).includes(q));
+    if (!itens.length) continue;
+    total += itens.length;
+    html += `<details open><summary><span class="g">${esc(g.nome)}</span>${g.pick ? `<button type="button" class="pickbtn" aria-label="Qual ver primeiro em ${esc(g.nome)}">Qual ver?</button>` : ""}<span class="count">${itens.length}</span><span class="chev"></span></summary>`;
+    if (g.pick) html += `<div class="pick" hidden><small>Comece por</small><b>${esc(g.pick[0])}</b><span>${esc(g.pick[1])}</span></div>`;
+    if (g.nota) html += `<p class="gnote">${esc(g.nota)}</p>`;
+    html += "<ul>" + itens.map((i) => {
+      const id = slug(i[0]), vt = votos[id];
+      const cls = [g.pick && i[0] === g.pick[0] ? "is-pick" : "", vt ? "visto" : ""].filter(Boolean).join(" ");
+      let extra = "";
+      if (db && view !== "indicar" && !i[4]) {
+        if (vt) extra += `<span class="vtag">${esc(VOTOS[vt.voto] || vt.voto)}</span>${vt.nota ? `<div class="vnote">${esc(vt.nota)}</div>` : ""}`;
+        if (aberto === id) {
+          extra += `<div class="vote" data-id="${id}"><div class="opts">${Object.entries(VOTOS).map(([k, r]) => `<button type="button" data-voto="${k}" aria-pressed="${rascunho.voto === k}">${esc(r)}</button>`).join("")}</div><textarea placeholder="Por quê? (se quiser)" aria-label="Observação">${esc(rascunho.nota)}</textarea><div class="acts"><button type="button" class="save" ${rascunho.voto ? "" : "disabled"}>Salvar</button><button type="button" class="cancel">Cancelar</button>${vt ? '<button type="button" class="clear">Tirar voto</button>' : ""}</div></div>`;
+        } else {
+          extra += `<div><button type="button" class="vistobtn" data-abrir="${id}" data-titulo="${esc(i[0])}">${vt ? "Mudar voto" : "Já vi"}</button></div>`;
+        }
+      }
+      return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${i[3] ? `<div class="d">${esc(i[3])}</div>` : ""}${extra}</li>`;
+    }).join("") + "</ul></details>";
+  }
+  $("#lista").innerHTML = total ? html : '<p class="empty">Nada encontrado.</p>';
+}
+
+function setView(next, fromHash) {
+  view = next;
+  document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === view)));
+  if (!fromHash) { try { location.hash = view; } catch (e) {} }
+  render();
+}
+document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
+$("#busca").addEventListener("input", render);
+$("#lista").addEventListener("click", (e) => {
+  const btn = e.target.closest(".pickbtn");
+  if (!btn) return;
+  e.preventDefault();
+  const d = btn.closest("details");
+  const box = d.querySelector(".pick");
+  d.open = true;
+  box.hidden = !box.hidden;
+  d.classList.toggle("pick-on", !box.hidden);
+});
+$("#lista").addEventListener("click", async (e) => {
+  const abrir = e.target.closest(".vistobtn");
+  if (abrir) {
+    const id = abrir.dataset.abrir, vt = votos[id];
+    aberto = id; rascunho = { voto: vt ? vt.voto : "", nota: vt ? vt.nota || "" : "", titulo: abrir.dataset.titulo };
+    render(); return;
+  }
+  const box = e.target.closest(".vote");
+  if (!box) return;
+  const op = e.target.closest("[data-voto]");
+  if (op) { rascunho.nota = box.querySelector("textarea").value; rascunho.voto = op.dataset.voto; render(); return; }
+  if (e.target.closest(".cancel")) { aberto = null; render(); return; }
+  const id = box.dataset.id;
+  try {
+    if (e.target.closest(".clear")) { await db.collection("votos").doc(id).delete(); aberto = null; }
+    else if (e.target.closest(".save") && rascunho.voto) {
+      await db.collection("votos").doc(id).set({ titulo: rascunho.titulo, voto: rascunho.voto, nota: box.querySelector("textarea").value.trim(), em: new Date().toISOString().slice(0, 10) });
+      aberto = null;
+    }
+  } catch (err) { alert("Não consegui salvar o voto agora. Tente de novo."); return; }
+  render();
+});
+const VIEWS = ["quero-ver", "indicar", "vistos"];
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (VIEWS.includes(h) && (h !== "vistos" || db)) setView(h, true); });
+{ const h = location.hash.slice(1); setView(h === "indicar" ? h : "quero-ver", true); }
+// Votos: só aparecem pra quem pode gravar (o dono). Sem o banco, a página funciona igual, sem os botões.
+(async () => {
+  try {
+    const c = window.claude && (await claude.use("db"));
+    if (!c) return;
+    db = c;
+    $("#tab-vis").hidden = false;
+    db.collection("votos").onSnapshot((snap) => {
+      const m = {};
+      snap.forEach((d) => { m[d.id] = d.data(); });
+      votos = m; render();
+    }, () => {});
+    render();
+  } catch (e) { db = null; }
+})();
+// Votos: só aparecem pra quem pode gravar (o dono). Sem o banco, a página funciona igual, sem os botões.
+(async () => {
+  try {
+    const c = window.claude && (await claude.use("db"));
+    if (!c) return;
+    db = c;
+    db.collection("votos").onSnapshot((snap) => {
+      const m = {};
+      snap.forEach((d) => { m[d.id] = d.data(); });
+      votos = m; render();
+    }, () => {});
+    render();
+  } catch (e) { db = null; }
+})();
+</script>
+</html>
