@@ -1,5 +1,6 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
 <style>.pickbtn,.pick{display:none!important}li.is-pick .t::after{content:none!important}</style>
+<script>window.PUBLICO = true;</script>
 <title>FRL Cinema</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#3A3D43">
@@ -257,6 +258,20 @@ const VISTOS = [
   ["Sob a Sombra (Under the Shadow)", "Irã e Reino Unido, 2016", "IMDb ~6,9", "Achei mediano, um filme normal.", "indiferente"],
   ["O Segredo dos Seus Olhos", "Argentina, 2009", "", "Vi duas vezes e não achei tudo isso. Pareceu muito cabeça.", "indiferente"]
 ];
+// Sinopses neutras, usadas só na versão pública (window.PUBLICO), no lugar dos meus comentários.
+const SINOPSE = {
+  "Doentes de Amor (The Big Sick)": "Comédia romântica baseada na história real do casal Kumail Nanjiani e Emily V. Gordon. Um comediante se envolve com uma estudante, e a relação é posta à prova quando ela adoece gravemente.",
+  "Doce Novembro (Sweet November)": "Romance dramático com Keanu Reeves e Charlize Theron. Um publicitário workaholic conhece uma mulher que propõe viverem um relacionamento de um mês.",
+  "A Ladra Solitária (The Isolate Thief)": "Faroeste de suspense na Guerra Civil americana, com Mackenzie Foy e Sean Bean. Uma jovem sozinha num posto do exército precisa se defender. Contém violência.",
+  "Resident Evil": "Novo filme da série de videogame, dirigido por Zach Cregger. Terror e ação com um pouco de humor. Entre 96% e 97% no Rotten Tomatoes.",
+  "Palm Springs": "Dois convidados de um casamento ficam presos no mesmo dia, que se repete. Comédia romântica com ficção científica leve.",
+  "Sisu": "Em 1944, um ex-soldado finlandês atravessa a Lapônia levando ouro e é perseguido por soldados nazistas. Ação brutal.",
+  "Deixa Ela Entrar (Let the Right One In)": "Na Suécia do começo dos anos 80, um menino de 12 anos que sofre bullying se aproxima da nova vizinha, uma menina misteriosa que só aparece à noite. Terror sueco.",
+  "A Morte Te Dá Parabéns (Happy Death Day)": "Uma universitária revive o dia do próprio aniversário, que sempre termina com ela assassinada, e precisa descobrir quem é o criminoso. Slasher com humor e loop temporal. Tem continuação.",
+  "Contratiempo (The Invisible Guest)": "Um empresário acusado de matar a amante conta sua versão da noite do crime à advogada que vai defendê-lo. Thriller espanhol de mistério.",
+  "The Awakening (O Despertar)": "Inglaterra, 1921. Uma escritora que desmascara fraudes espíritas é chamada a um colégio interno onde dizem haver um fantasma."
+};
+const descr = (i) => (window.PUBLICO && SINOPSE[i[0]]) || i[3];
 const $ = (s) => document.querySelector(s);
 let view = "quero-ver";
 const VOTOS = { indicar: "Vi, gostei e indico", gostei: "Vi e gostei (não indico)", indiferente: "Vi, indiferente", "nao-gostei": "Vi e não gostei" };
@@ -327,7 +342,7 @@ function render() {
           extra += `<div><button type="button" class="vistobtn" data-abrir="${id}" data-titulo="${esc(i[0])}">${vt ? "Mudar voto" : "Já vi"}</button></div>`;
         }
       }
-      return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${i[3] ? `<div class="d">${esc(i[3])}</div>` : ""}${extra}</li>`;
+      return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${descr(i) ? `<div class="d">${esc(descr(i))}</div>` : ""}${extra}</li>`;
     }).join("") + "</ul></details>";
   }
   $("#lista").innerHTML = total ? html : '<p class="empty">Nada encontrado.</p>';
