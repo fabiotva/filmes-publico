@@ -192,9 +192,10 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
     <input class="search" id="busca" type="search" placeholder="Buscar por título ou país" aria-label="Buscar">
   </div>
   <div class="nomebox" id="nomebox" hidden>
-    <b>Qual é o seu nome?</b>
-    <span>Assim eu sei quem está usando e você pode dar de 1 a 5 estrelas nos filmes.</span>
-    <div class="row"><input id="nome" type="text" maxlength="60" autocomplete="given-name" placeholder="Seu nome" aria-label="Seu nome"><button type="button" id="nome-ok">Entrar</button></div>
+    <b>Escolha um nome de usuário</b>
+    <span>Pode ser seu nome e sobrenome. O PIN são 4 números que só você sabe: com ele você entra de novo em outro aparelho. Assim eu sei quem está usando e você pode dar de 1 a 5 estrelas.</span>
+    <div class="row"><input id="nome" type="text" maxlength="60" autocomplete="username" placeholder="Nome de usuário" aria-label="Nome de usuário"><input id="pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="PIN" aria-label="PIN de 4 números" style="flex:0 0 84px"><button type="button" id="nome-ok">Entrar</button></div>
+    <span id="nome-erro" role="alert" style="color:var(--bronze)"></span>
   </div>
   <p class="quem" id="quem" hidden></p>
   <p class="aviso" id="aviso"></p>
@@ -416,9 +417,9 @@ $("#lista").addEventListener("click", async (e) => {
   render();
 });
 
-// Estrelas das clientes (só na versão pública): nome e nota vão pro Worker frl-filmes; a média volta pra todo mundo.
+// Estrelas das clientes (só na versão pública e na prévia): usuário e PIN vão pro Worker frl-filmes; a média volta pra todo mundo.
 const API = "https://frl-filmes.fichas-frl.workers.dev";
-let nome = "", minhas = {}, medias = {};
+let nome = "", pin = "", minhas = {}, medias = {};
 const ls = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
 function estrelasHtml(i) {
   const id = slug(i[0]), m = medias[id], mine = minhas[id] || 0;
@@ -435,27 +436,43 @@ function nomeUI() {
 async function carregarMedias() {
   try { const r = await fetch(API + "/medias"); if (r.ok) { medias = await r.json(); render(); } } catch (e) {}
 }
+const sair = () => { nome = ""; pin = ""; minhas = {}; ls.set("frl-cinema-nome", ""); ls.set("frl-cinema-pin", ""); ls.set("frl-cinema-minhas", "{}"); };
+async function entrarNoApp(u, p, avisar) {
+  try {
+    const r = await fetch(API + "/entrar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: u, pin: p }) });
+    if (r.status === 401) { if (avisar) $("#nome-erro").textContent = "Já existe uma pessoa com esse nome de usuário. Se é você, digite o seu PIN. Se não, escolha outro nome."; else sair(); nomeUI(); render(); return; }
+    if (!r.ok) throw new Error();
+    const d = await r.json();
+    nome = u; pin = p; minhas = d.votos || {};
+    ls.set("frl-cinema-nome", u); ls.set("frl-cinema-pin", p); ls.set("frl-cinema-minhas", JSON.stringify(minhas));
+    $("#nome-erro").textContent = ""; nomeUI(); render();
+  } catch (e) { if (avisar) $("#nome-erro").textContent = "Não consegui entrar agora. Tente de novo."; }
+}
 const REAL = !!window.PUBLICO;
 if (REAL || window.PESSOAL) carregarMedias();
-async function carregarMinhas() {
-  if (!nome) return;
-  try { const r = await fetch(API + "/meus?nome=" + encodeURIComponent(nome)); if (r.ok) { minhas = await r.json(); ls.set("frl-cinema-minhas", JSON.stringify(minhas)); render(); } } catch (e) {}
-}
 if (REAL || window.PESSOAL) {
-  nome = ls.get("frl-cinema-nome") || "";
+  nome = ls.get("frl-cinema-nome") || ""; pin = ls.get("frl-cinema-pin") || "";
+  if (nome && !pin) nome = "";
   try { minhas = JSON.parse(ls.get("frl-cinema-minhas") || "{}"); } catch (e) { minhas = {}; }
-  nomeUI(); carregarMinhas();
-  const entrar = () => { const v = $("#nome").value.trim(); if (!v) return; nome = v; ls.set("frl-cinema-nome", v); nomeUI(); carregarMinhas(); };
+  nomeUI();
+  if (nome) entrarNoApp(nome, pin, false);
+  const entrar = () => {
+    const u = $("#nome").value.trim().replace(/\s+/g, " "), p = $("#pin").value.trim();
+    if (!u) { $("#nome-erro").textContent = "Escolha um nome de usuário."; return; }
+    if (!/^\d{4}$/.test(p)) { $("#nome-erro").textContent = "O PIN tem 4 números."; return; }
+    entrarNoApp(u, p, true);
+  };
   $("#nome-ok").addEventListener("click", entrar);
-  $("#nome").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
-  document.addEventListener("click", (e) => { if (e.target.id === "trocar") { nome = ""; ls.set("frl-cinema-nome", ""); minhas = {}; ls.set("frl-cinema-minhas", "{}"); nomeUI(); render(); $("#nome").focus(); } });
+  $("#pin").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
+  document.addEventListener("click", (e) => { if (e.target.id === "trocar") { sair(); nomeUI(); render(); $("#nome").focus(); } });
   $("#lista").addEventListener("click", async (e) => {
     const b = e.target.closest(".est button");
     if (!b) return;
     if (!nome) { window.scrollTo({ top: 0, behavior: "smooth" }); $("#nome").focus(); return; }
     const box = b.closest(".est"), id = box.dataset.id, n = Number(b.dataset.n);
     try {
-      const r = await fetch(API + "/voto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ nome, filme: id, titulo: box.dataset.titulo, estrelas: n }) });
+      const r = await fetch(API + "/voto", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin, filme: id, titulo: box.dataset.titulo, estrelas: n }) });
+      if (r.status === 401) { sair(); nomeUI(); render(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
       if (!r.ok) throw new Error();
       minhas[id] = n; ls.set("frl-cinema-minhas", JSON.stringify(minhas));
       await carregarMedias(); render();
