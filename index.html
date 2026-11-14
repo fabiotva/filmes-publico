@@ -52,7 +52,12 @@ body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-a
   margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
   padding: 26px max(16px, env(safe-area-inset-left, 0px)) 76px;
 }
-.hero-in { max-width: 640px; margin: 0 auto; }
+.hero-in { max-width: 640px; margin: 0 auto; position: relative; }
+.modobtn { position: absolute; top: 0; right: 0; font: 600 12px var(--font); color: var(--hero-ink); background: transparent; border: 1px solid var(--hero-muted); border-radius: 99px; padding: 6px 12px; min-height: 32px; cursor: pointer; }
+.modobtn[hidden] { display: none; }
+body.publico .pickbtn, body.publico .pick { display: none !important; }
+body.publico li.is-pick .t::after { content: none !important; }
+body.previa .est button { pointer-events: none; }
 .brand { display: flex; align-items: center; gap: 14px; }
 .mark { width: 52px; height: 52px; flex: none; }
 .brand-t { display: flex; flex-direction: column; line-height: 1; }
@@ -160,6 +165,7 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
 <div class="wrap">
   <header class="hero">
     <div class="hero-in">
+      <button type="button" class="modobtn" id="modo" hidden></button>
       <div class="brand">
         <svg class="mark" viewBox="0 0 180 180" role="img" aria-label="Logo de filme">
           <rect width="180" height="180" rx="40" fill="#F1EFEB" fill-opacity=".1"/>
@@ -296,7 +302,7 @@ const descr = (i) => (window.PUBLICO && SINOPSE[i[0]]) || i[3];
 const $ = (s) => document.querySelector(s);
 let view = "quero-ver";
 const VOTOS = { indicar: "Vi, gostei e indico", gostei: "Vi e gostei (não indico)", indiferente: "Vi, indiferente", "nao-gostei": "Vi e não gostei" };
-let db = null, votos = {}, aberto = null, rascunho = { voto: "", nota: "", titulo: "" };
+let db = null, votos = {}, votosReal = {}, aberto = null, rascunho = { voto: "", nota: "", titulo: "" };
 const slug = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
 const count = (k) => DATA[k].grupos.reduce((n, g) => n + g.itens.length, 0);
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -355,7 +361,7 @@ function render() {
       const id = slug(i[0]), vt = votos[id];
       const cls = [g.pick && i[0] === g.pick[0] ? "is-pick" : "", vt ? "visto" : ""].filter(Boolean).join(" ");
       let extra = "";
-      if (db && view !== "indicar" && !i[4]) {
+      if (db && !window.PUBLICO && view !== "indicar" && !i[4]) {
         if (vt) extra += `<span class="vtag">${esc(VOTOS[vt.voto] || vt.voto)}</span>${vt.nota ? `<div class="vnote">${esc(vt.nota)}</div>` : ""}`;
         if (aberto === id) {
           extra += `<div class="vote" data-id="${id}"><div class="opts">${Object.entries(VOTOS).map(([k, r]) => `<button type="button" data-voto="${k}" aria-pressed="${rascunho.voto === k}">${esc(r)}</button>`).join("")}</div><textarea placeholder="Por quê? (se quiser)" aria-label="Observação">${esc(rascunho.nota)}</textarea><div class="acts"><button type="button" class="save" ${rascunho.voto ? "" : "disabled"}>Salvar</button><button type="button" class="cancel">Cancelar</button>${vt ? '<button type="button" class="clear">Tirar voto</button>' : ""}</div></div>`;
@@ -429,10 +435,12 @@ function nomeUI() {
 async function carregarMedias() {
   try { const r = await fetch(API + "/medias"); if (r.ok) { medias = await r.json(); render(); } } catch (e) {}
 }
-if (window.PUBLICO) {
+const REAL = !!window.PUBLICO;
+if (REAL || window.PESSOAL) carregarMedias();
+if (REAL) {
   nome = ls.get("frl-cinema-nome") || "";
   try { minhas = JSON.parse(ls.get("frl-cinema-minhas") || "{}"); } catch (e) { minhas = {}; }
-  nomeUI(); carregarMedias();
+  nomeUI();
   const entrar = () => { const v = $("#nome").value.trim(); if (!v) return; nome = v; ls.set("frl-cinema-nome", v); nomeUI(); };
   $("#nome-ok").addEventListener("click", entrar);
   $("#nome").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
@@ -450,8 +458,20 @@ if (window.PUBLICO) {
     } catch (err) { alert("Não consegui salvar sua nota agora. Tente de novo."); }
   });
 }
+// Só na versão pessoal: botão que mostra a página como as clientes veem (sem botões, com sinopse e estrelas, sem comentários).
+function setModo(pub) {
+  window.PUBLICO = pub;
+  document.body.classList.toggle("publico", pub);
+  document.body.classList.toggle("previa", pub && !REAL);
+  votos = pub ? {} : votosReal;
+  if (pub && view === "vistos") view = "quero-ver";
+  $("#tab-vis").hidden = pub || !db;
+  $("#modo").textContent = pub ? "Voltar pra minha versão" : "Ver como cliente";
+  setView(view, true);
+}
+if (window.PESSOAL) { $("#modo").hidden = false; $("#modo").addEventListener("click", () => setModo(!window.PUBLICO)); setModo(false); }
 const VIEWS = ["quero-ver", "indicar", "vistos"];
-window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (VIEWS.includes(h) && (h !== "vistos" || db)) setView(h, true); });
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (VIEWS.includes(h) && (h !== "vistos" || (db && !window.PUBLICO))) setView(h, true); });
 { const h = location.hash.slice(1); setView(h === "indicar" ? h : "quero-ver", true); }
 // Votos: só aparecem pra quem pode gravar (o dono). Sem o banco, a página funciona igual, sem os botões.
 (async () => {
@@ -459,11 +479,11 @@ window.addEventListener("hashchange", () => { const h = location.hash.slice(1); 
     const c = window.claude && (await claude.use("db"));
     if (!c) return;
     db = c;
-    $("#tab-vis").hidden = false;
+    $("#tab-vis").hidden = !!window.PUBLICO;
     db.collection("votos").onSnapshot((snap) => {
       const m = {};
       snap.forEach((d) => { m[d.id] = d.data(); });
-      votos = m; render();
+      votosReal = m; votos = window.PUBLICO ? {} : m; render();
     }, () => {});
     render();
   } catch (e) { db = null; }
