@@ -150,6 +150,14 @@ li.visto .t { opacity: .75; }
 .nomebox .row { display: flex; gap: 8px; }
 .nomebox input { flex: 1; min-width: 0; font: 400 16px var(--font); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 44px; }
 .nomebox button { font: 700 14px var(--font); min-height: 44px; padding: 8px 16px; border-radius: 99px; background: var(--hero); color: var(--hero-ink); border: 0; cursor: pointer; }
+.intro { margin: 18px 0 0; padding: 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); font-size: 14px; line-height: 1.5; }
+.intro[hidden] { display: none; }
+.intro h2 { font-size: 16px; margin: 0 0 8px; }
+.intro p { margin: 0 0 10px; }
+.intro ul { margin: 0 0 10px; padding-left: 20px; }
+.intro li { margin-bottom: 6px; }
+.intro .ult { margin-bottom: 0; }
+.nomebox textarea { font: 400 16px var(--font); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 64px; resize: vertical; }
 .quem { margin: 14px 2px 0; font-size: 13px; color: var(--muted); }
 .quem[hidden] { display: none; }
 .quem button { font: 600 13px var(--font); color: var(--bronze); background: none; border: 0; padding: 4px 6px; cursor: pointer; text-decoration: underline; }
@@ -183,10 +191,20 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
     </div>
   </header>
 
+  <section class="intro" id="intro" hidden>
+    <h2>Como funciona esta página</h2>
+    <p>Este é um sisteminha que eu criei pra reunir os filmes que me interessam. Eu vejo muito filme no salão e vocês sempre me pedem indicação, então organizei tudo aqui e deixei aberto pra todo mundo.</p>
+    <ul>
+      <li><b>Quero ver:</b> filmes que eu ainda não assisti. Não estão validados: são os que eu pretendo ver.</li>
+      <li><b>Indicados:</b> filmes que eu assisti e gostei muito. Isso não quer dizer que você vai gostar, mas são os que eu indico pra assistir.</li>
+    </ul>
+    <p><b>Dê estrelas.</b> Escolha um nome de usuário (um apelido) e um PIN de 4 números. O PIN serve pra ninguém usar o seu nome e misturar com os filmes que você já viu. Depois é só dar estrelas nos filmes que você já assistiu: <b>5</b> excelente, <b>4</b> muito bom, <b>3</b> bom, <b>2</b> ruim e <b>1</b> horrível. A página junta as estrelas de todas as clientes e mostra a média em cada filme.</p>
+    <p class="ult"><b>Indique um filme pra mim.</b> No campo lá embaixo, depois da lista, você me conta um filme que merece entrar. De preferência um que não seja tão conhecido: o objetivo aqui é achar filmes que quase ninguém assiste.</p>
+  </section>
   <div class="ctl">
     <div class="tabs" role="tablist">
       <button role="tab" aria-selected="true" data-view="quero-ver">Quero ver <span class="n" id="n-ver"></span></button>
-      <button role="tab" aria-selected="false" data-view="indicar">Indicar <span class="n" id="n-ind"></span></button>
+      <button role="tab" aria-selected="false" data-view="indicar">Indicados <span class="n" id="n-ind"></span></button>
       <button role="tab" aria-selected="false" data-view="vistos" id="tab-vis" hidden>Vistos <span class="n" id="n-vis"></span></button>
     </div>
     <input class="search" id="busca" type="search" placeholder="Buscar por título ou país" aria-label="Buscar">
@@ -200,6 +218,14 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
   <p class="quem" id="quem" hidden></p>
   <p class="aviso" id="aviso"></p>
   <div id="lista" role="tabpanel"></div>
+  <div class="nomebox" id="sugbox" hidden>
+    <b>Indique um filme pra mim</b>
+    <span>Prefira um filme que não seja tão conhecido. Pra indicar, você precisa estar com seu nome de usuário e PIN lá em cima.</span>
+    <input id="sug-titulo" type="text" maxlength="120" placeholder="Nome do filme" aria-label="Nome do filme">
+    <textarea id="sug-motivo" maxlength="300" placeholder="Por que você indica? (opcional)" aria-label="Por que você indica"></textarea>
+    <div class="row"><button type="button" id="sug-ok">Enviar indicação</button></div>
+    <span id="sug-msg" role="status"></span>
+  </div>
   <footer>Atualizado em 2026-11-18. Notas do IMDb escritas de memória, sem conferir.</footer>
 </div>
 
@@ -454,6 +480,8 @@ function estrelasHtml(i) {
   return h;
 }
 function nomeUI() {
+  $("#intro").hidden = !window.PUBLICO;
+  $("#sugbox").hidden = !window.PUBLICO;
   $("#nomebox").hidden = !window.PUBLICO || !!nome;
   $("#quem").hidden = !window.PUBLICO || !nome;
   $("#quem").innerHTML = nome ? `Oi, ${esc(nome)}. <button type="button" id="trocar">Não sou eu</button>` : "";
@@ -489,6 +517,20 @@ if (REAL || window.PESSOAL) {
   };
   $("#nome-ok").addEventListener("click", entrar);
   $("#pin").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
+  $("#sug-ok").addEventListener("click", async () => {
+    const msg = $("#sug-msg"), t = $("#sug-titulo").value.trim();
+    if (!nome) { msg.textContent = "Entre com seu nome de usuário e PIN lá em cima primeiro."; window.scrollTo({ top: 0, behavior: "smooth" }); $("#nome").focus(); return; }
+    if (!t) { msg.textContent = "Escreva o nome do filme."; return; }
+    msg.textContent = "Enviando...";
+    try {
+      const r = await fetch(API + "/sugestao", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin, titulo: t, motivo: $("#sug-motivo").value.trim() }) });
+      if (r.status === 401) { sair(); nomeUI(); render(); msg.textContent = "Entre de novo com seu nome de usuário e PIN lá em cima."; return; }
+      if (r.status === 429) { msg.textContent = "Você já mandou várias indicações hoje. Tente amanhã."; return; }
+      if (!r.ok) throw new Error();
+      $("#sug-titulo").value = ""; $("#sug-motivo").value = "";
+      msg.textContent = "Recebi sua indicação, obrigado!";
+    } catch (err) { msg.textContent = "Não consegui enviar agora. Tente de novo."; }
+  });
   document.addEventListener("click", (e) => { if (e.target.id === "trocar") { sair(); nomeUI(); render(); $("#nome").focus(); } });
   $("#lista").addEventListener("click", async (e) => {
     const b = e.target.closest(".est button");
