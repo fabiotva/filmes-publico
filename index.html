@@ -200,7 +200,7 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
   <p class="quem" id="quem" hidden></p>
   <p class="aviso" id="aviso"></p>
   <div id="lista" role="tabpanel"></div>
-  <footer>Atualizado em 2026-11-13. Notas do IMDb escritas de memória, sem conferir.</footer>
+  <footer>Atualizado em 2026-11-18. Notas do IMDb escritas de memória, sem conferir.</footer>
 </div>
 
 <script>
@@ -237,7 +237,10 @@ const DATA = {
       { nome: "Comédia romântica", pick: ["The Lunchbox", "A melhor nota do gênero, e emociona, como o Doentes de Amor que você gostou."], itens: [
         ["In Your Eyes", "EUA, 2014", "IMDb ~7,0", "Dois desconhecidos sentem o que o outro sente. Roteiro de Joss Whedon."],
         ["The Lunchbox", "Índia, 2013", "IMDb ~7,8", "A marmita chega ao homem errado e os dois trocam bilhetes."],
-        ["Man Up: Encontro Perfeito", "Reino Unido, 2015", "IMDb ~6,9", "Leve e rápido."]
+        ["Man Up: Encontro Perfeito", "Reino Unido, 2015", "IMDb ~6,9", "Leve e rápido."],
+        ["Amor a Toda Prova (Crazy, Stupid, Love)", "EUA, 2011", "IMDb ~7,4", "Várias histórias de amor que se cruzam, com elenco grande. Leve e bem escrita."],
+        ["Ruby Sparks", "EUA, 2012", "IMDb ~7,2", "Um escritor cria uma personagem e ela aparece de verdade. Fantasia leve."],
+        ["O Fabuloso Destino de Amélie Poulain", "França, 2001", "IMDb ~8,3", "Romance doce e esquisito, a maior nota do gênero na lista."]
       ]},
       { nome: "Loop temporal e viagem no tempo", pick: ["Crimes Temporais (Los Cronocrímenes)", "O de melhor crítica dos quatro, curto e tenso."], itens: [
         ["Crimes Temporais (Los Cronocrímenes)", "Espanha, 2007", "IMDb ~7,1", "Um homem entra numa máquina do tempo, volta uma hora e cria um paradoxo. Tenso e enxuto."],
@@ -252,7 +255,8 @@ const DATA = {
       { nome: "Romance e comédia romântica", itens: [
         ["Doentes de Amor (The Big Sick)", "EUA, 2017", "IMDb ~7,5", "Comédia romântica que emociona, baseada numa história real. Cerca de 98% no Rotten Tomatoes."],
         ["Doce Novembro (Sweet November)", "EUA, 2001", "", "Romance dramático, desses que fazem chorar. A crítica foi ruim e o público ficou no meio; indico pelo meu gosto."],
-        ["Palm Springs", "EUA, 2020", "IMDb ~7,4", "Dois convidados de um casamento presos no mesmo dia, que se repete. Muito bom, acho que muita gente vai gostar."]
+        ["Palm Springs", "EUA, 2020", "IMDb ~7,4", "Dois convidados de um casamento presos no mesmo dia, que se repete. Muito bom, acho que muita gente vai gostar."],
+        ["Questão de Tempo (About Time)", "Reino Unido, 2013", "IMDb ~7,8", "Comédia romântica com viagem no tempo, engraçada e emocionante. Muito bom, adoro esse filme."]
       ]},
       { nome: "Ação e faroeste", itens: [
         ["A Ladra Solitária (The Isolate Thief)", "EUA, 2026", "", "Faroeste de suspense na Guerra Civil, com Mackenzie Foy e Sean Bean. A crítica ficou dividida. É violento, avisar quem for ver."],
@@ -280,6 +284,7 @@ const VISTOS = [
   ["Bela Vingança (Promising Young Woman)", "EUA, 2020", "IMDb ~7,5", "Bom roteiro, cheio de reviravolta e inteligente. Mas passa a ideia de que nenhum homem presta, nem os bonzinhos. Não indico pra quem já pensa assim, porque só reforçaria. É só um filme.", "gostei"],
   ["Não Fale o Mal (Speak No Evil)", "Dinamarca, 2022", "", "Achei normal, nem ruim nem bom.", "indiferente"],
   ["Sisu", "Finlândia, 2022", "IMDb ~6,9", "Já tinha visto e gosto.", "indicar"],
+  ["Questão de Tempo (About Time)", "Reino Unido, 2013", "IMDb ~7,8", "Já tinha visto, adoro esse filme.", "indicar"],
   ["Deixa Ela Entrar (Let the Right One In)", "Suécia, 2008", "IMDb ~7,9", "Revi e achei muito bom. Na primeira vez não me marcou.", "indicar"],
   ["Contratiempo (The Invisible Guest)", "Espanha, 2016", "IMDb ~8,0", "Muito bom mesmo. Roteiro bacana e bons atores.", "indicar"],
   ["A Morte Te Dá Parabéns (Happy Death Day)", "EUA, 2017", "IMDb ~6,6", "O 1 é legal mas previsível; o 2 melhora o 1. Ver os dois.", "indicar"],
@@ -293,6 +298,7 @@ const SINOPSE = {
   "A Ladra Solitária (The Isolate Thief)": "Faroeste de suspense na Guerra Civil americana, com Mackenzie Foy e Sean Bean. Uma jovem sozinha num posto do exército precisa se defender. Contém violência.",
   "Resident Evil": "Novo filme da série de videogame, dirigido por Zach Cregger. Terror e ação com um pouco de humor. Entre 96% e 97% no Rotten Tomatoes.",
   "Palm Springs": "Dois convidados de um casamento ficam presos no mesmo dia, que se repete. Comédia romântica com ficção científica leve.",
+  "Questão de Tempo (About Time)": "Um rapaz descobre que os homens da sua família podem voltar no tempo e usa o dom pra conquistar a mulher que ama. Comédia romântica com toque de fantasia.",
   "Sisu": "Em 1944, um ex-soldado finlandês atravessa a Lapônia levando ouro e é perseguido por soldados nazistas. Ação brutal.",
   "Deixa Ela Entrar (Let the Right One In)": "Na Suécia do começo dos anos 80, um menino de 12 anos que sofre bullying se aproxima da nova vizinha, uma menina misteriosa que só aparece à noite. Terror sueco.",
   "A Morte Te Dá Parabéns (Happy Death Day)": "Uma universitária revive o dia do próprio aniversário, que sempre termina com ela assassinada, e precisa descobrir quem é o criminoso. Slasher com humor e loop temporal. Tem continuação.",
