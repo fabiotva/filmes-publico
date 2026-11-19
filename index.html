@@ -208,6 +208,7 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
       <button role="tab" aria-selected="true" data-view="quero-ver">Quero ver <span class="n" id="n-ver"></span></button>
       <button role="tab" aria-selected="false" data-view="indicar">Indicados <span class="n" id="n-ind"></span></button>
       <button role="tab" aria-selected="false" data-view="vistos" id="tab-vis" hidden>Vistos <span class="n" id="n-vis"></span></button>
+      <button role="tab" aria-selected="false" data-view="sugestoes" id="tab-sug" hidden>Sugestões <span class="n" id="n-sug"></span></button>
     </div>
     <input class="search" id="busca" type="search" placeholder="Buscar por título ou país" aria-label="Buscar">
   </div>
@@ -374,8 +375,29 @@ const norm = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
 $("#n-ind").textContent = count("indicar");
 
+let sugestoes = null, sugErro = "";
+async function carregarSugestoes() {
+  if (!nome) { sugestoes = null; sugErro = ""; render(); return; }
+  try {
+    const r = await fetch(API + "/sugestoes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin }) });
+    if (r.status === 403) { sugErro = "Esse usuário não tem permissão pra ver as sugestões. Entre com o seu."; sugestoes = []; }
+    else if (r.status === 401) { sair(); sugestoes = null; nomeUI(); }
+    else if (!r.ok) throw new Error();
+    else { sugErro = ""; sugestoes = (await r.json()).lista || []; }
+  } catch (e) { sugErro = "Não consegui buscar as sugestões agora. Tente de novo."; sugestoes = []; }
+  $("#n-sug").textContent = sugestoes ? sugestoes.length : "";
+  render();
+}
 function visao() {
   const ver = DATA["quero-ver"];
+  if (view === "sugestoes") {
+    if (!nome) return { aviso: "Entre com o seu usuário e PIN pra ver o que as clientes indicaram.", grupos: [] };
+    if (sugestoes === null) return { aviso: "Buscando as sugestões...", grupos: [] };
+    const por = {};
+    for (const x of sugestoes) { const k = norm(x.titulo).replace(/\s+/g, " ").trim(); (por[k] = por[k] || { titulo: x.titulo, itens: [] }).itens.push(x); }
+    const itens = Object.values(por).sort((a, b) => b.itens[0].em.localeCompare(a.itens[0].em)).map((g) => [g.titulo, "por " + [...new Set(g.itens.map((x) => x.nome))].join(", ") + " · " + g.itens[0].em.slice(8, 10) + "/" + g.itens[0].em.slice(5, 7), "", g.itens.map((x) => x.motivo).filter(Boolean).join(" | ")]);
+    return { aviso: sugErro || (itens.length ? "Filmes que as clientes indicaram, do mais novo pro mais antigo." : "Ninguém indicou filme ainda."), grupos: [{ nome: "Indicações das clientes", itens }] };
+  }
   if (view === "indicar") {
     const SEG = { "Comédia romântica": "Romance e comédia romântica", "Romance de época": "Romance e comédia romântica", "Ação": "Ação e faroeste", "Terror": "Terror e ação com comédia" };
     const grupos = DATA.indicar.grupos.map((g) => ({ ...g, itens: [...g.itens] }));
@@ -425,7 +447,7 @@ function render() {
       const id = slug(i[0]), vt = votos[id];
       const cls = [g.pick && i[0] === g.pick[0] ? "is-pick" : "", vt ? "visto" : ""].filter(Boolean).join(" ");
       let extra = "";
-      if (db && !window.PUBLICO && view !== "indicar" && !i[4]) {
+      if (db && !window.PUBLICO && view !== "indicar" && view !== "sugestoes" && !i[4]) {
         if (vt) extra += `<span class="vtag">${esc(VOTOS[vt.voto] || vt.voto)}</span>${vt.nota ? `<div class="vnote">${esc(vt.nota)}</div>` : ""}`;
         if (aberto === id) {
           extra += `<div class="vote" data-id="${id}"><div class="opts">${Object.entries(VOTOS).map(([k, r]) => `<button type="button" data-voto="${k}" aria-pressed="${rascunho.voto === k}">${esc(r)}</button>`).join("")}</div><textarea placeholder="Por quê? (se quiser)" aria-label="Observação">${esc(rascunho.nota)}</textarea><div class="acts"><button type="button" class="save" ${rascunho.voto ? "" : "disabled"}>Salvar</button><button type="button" class="cancel">Cancelar</button>${vt ? '<button type="button" class="clear">Tirar voto</button>' : ""}</div></div>`;
@@ -443,7 +465,9 @@ function setView(next, fromHash) {
   view = next;
   document.querySelectorAll(".tabs button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.view === view)));
   if (!fromHash) { try { location.hash = view; } catch (e) {} }
+  if (window.PESSOAL) nomeUI();
   render();
+  if (view === "sugestoes") carregarSugestoes();
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => setView(b.dataset.view)));
 $("#busca").addEventListener("input", render);
@@ -494,8 +518,9 @@ function estrelasHtml(i) {
 function nomeUI() {
   $("#intro").hidden = !window.PUBLICO;
   $("#sugbox").hidden = !window.PUBLICO;
-  $("#nomebox").hidden = !window.PUBLICO || !!nome;
-  $("#quem").hidden = !window.PUBLICO || !nome;
+  const naSug = !window.PUBLICO && view === "sugestoes";
+  $("#nomebox").hidden = !(window.PUBLICO || naSug) || !!nome;
+  $("#quem").hidden = !(window.PUBLICO || naSug) || !nome;
   $("#quem").innerHTML = nome ? `Oi, ${esc(nome)}. <button type="button" id="trocar">Não sou eu</button>` : "";
 }
 async function carregarMedias() {
@@ -510,7 +535,7 @@ async function entrarNoApp(u, p, avisar) {
     const d = await r.json();
     nome = u; pin = p; minhas = d.votos || {};
     ls.set("frl-cinema-nome", u); ls.set("frl-cinema-pin", p); ls.set("frl-cinema-minhas", JSON.stringify(minhas));
-    $("#nome-erro").textContent = ""; nomeUI(); render();
+    $("#nome-erro").textContent = ""; nomeUI(); render(); if (view === "sugestoes") carregarSugestoes();
   } catch (e) { if (avisar) $("#nome-erro").textContent = "Não consegui entrar agora. Tente de novo."; }
 }
 const REAL = !!window.PUBLICO;
@@ -566,12 +591,14 @@ function setModo(pub) {
   votos = pub ? {} : votosReal;
   if (pub && view === "vistos") view = "quero-ver";
   $("#tab-vis").hidden = pub || !db;
+  $("#tab-sug").hidden = pub || !window.PESSOAL;
+  if (pub && view === "sugestoes") view = "quero-ver";
   $("#modo").textContent = pub ? "Voltar pra minha versão" : "Ver como cliente";
   setView(view, true);
 }
 if (window.PESSOAL) { $("#modo").hidden = false; $("#modo").addEventListener("click", () => setModo(!window.PUBLICO)); setModo(false); }
-const VIEWS = ["quero-ver", "indicar", "vistos"];
-window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (VIEWS.includes(h) && (h !== "vistos" || (db && !window.PUBLICO))) setView(h, true); });
+const VIEWS = ["quero-ver", "indicar", "vistos", "sugestoes"];
+window.addEventListener("hashchange", () => { const h = location.hash.slice(1); if (VIEWS.includes(h) && (h !== "vistos" || (db && !window.PUBLICO)) && (h !== "sugestoes" || (window.PESSOAL && !window.PUBLICO))) setView(h, true); });
 { const h = location.hash.slice(1); setView(h === "indicar" ? h : "quero-ver", true); }
 // Votos: só aparecem pra quem pode gravar (o dono). Sem o banco, a página funciona igual, sem os botões.
 (async () => {
