@@ -78,6 +78,14 @@ body.publico li.is-pick .t::after { content: none !important; }
   min-height: 48px; padding: 8px 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .tabs button .n { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 99px; background: var(--bronze-soft); color: var(--bronze); font-variant-numeric: tabular-nums; }
+.ctl, .tabs { min-width: 0; }
+.tabs button { min-width: 0; white-space: nowrap; }
+@media (max-width: 520px) {
+  .tabs { gap: 2px; padding: 3px; }
+  .tabs button { font-size: 12.5px; padding: 8px 1px; gap: 3px; flex: 1 1 auto; }
+  .tabs button .n { font-size: 10px; padding: 1px 5px; }
+  .tabs button .n:empty { display: none; }
+}
 .tabs button[aria-selected="true"] { background: var(--hero); color: var(--hero-ink); }
 .tabs button[aria-selected="true"] .n { background: var(--hero-accent); color: #3A3D43; }
 .search {
