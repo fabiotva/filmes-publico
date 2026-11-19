@@ -471,7 +471,7 @@ function render() {
       }
       if (view === "sugestoes" && i[5]) {
         const st = i[6], on = (k) => (st === k ? "on" : "");
-        extra += `<div class="dec" data-ids="${i[5].join(",")}"><button type="button" data-st="aprovada" class="${on("aprovada")}">👍 Aprovar</button><button type="button" data-st="recusada" class="${on("recusada")}">👎 Não aprovar</button><span class="stt">${st === "aprovada" ? "Aprovada: está no Quero ver" : st === "recusada" ? "Não aprovada: fica aqui só pra registro" : "Esperando sua decisão"}</span></div>`;
+        extra += `<div class="dec" data-ids="${i[5].join(",")}"><button type="button" data-st="aprovada" class="${on("aprovada")}">👍 Aprovar</button><button type="button" data-st="recusada" class="${on("recusada")}">👎 Não aprovar</button><button type="button" data-apagar="1" aria-label="Apagar esta indicação" title="Apagar">🗑</button><span class="stt">${st === "aprovada" ? "Aprovada: está no Quero ver" : st === "recusada" ? "Não aprovada: fica aqui só pra registro" : "Esperando sua decisão"}</span></div>`;
       }
       return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${descr(i) ? `<div class="d">${esc(descr(i))}</div>` : ""}${window.PUBLICO && view !== "vistos" ? estrelasHtml(i) : ""}${extra}</li>`;
     }).join("") + "</ul></details>";
@@ -616,6 +616,15 @@ if (REAL || window.PESSOAL) {
     const dec = e.target.closest(".dec button");
     if (dec) {
       const ids = dec.parentElement.dataset.ids.split(",").map(Number);
+      if (dec.dataset.apagar) {
+        if (!confirm("Apagar essa indicação de vez? Se ela já foi aprovada, o filme sai do Quero ver.")) return;
+        try {
+          const r = await fetch(API + "/apagar", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin, ids }) });
+          if (!r.ok) throw new Error();
+          await carregarSugestoes(); carregarAprovadas();
+        } catch (err) { alert("Não consegui apagar agora. Tente de novo."); }
+        return;
+      }
       try {
         const r = await fetch(API + "/decidir", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin, ids, status: dec.dataset.st }) });
         if (!r.ok) throw new Error();
