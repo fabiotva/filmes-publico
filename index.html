@@ -160,6 +160,10 @@ body:has(.intro:not([hidden])) .hero { padding-bottom: 24px; }
 .intro li { margin-bottom: 6px; padding: 0; border: 0; }
 .intro .ult { margin-bottom: 0; }
 .nomebox textarea { font: 400 16px var(--font); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-height: 64px; resize: vertical; }
+.dec { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.dec button { font: 600 13px var(--font); min-height: 40px; padding: 6px 14px; border-radius: 99px; background: var(--bg); color: var(--ink); border: 1px solid var(--line); cursor: pointer; }
+.dec button.on { background: var(--hero); color: var(--hero-ink); border-color: var(--hero); }
+.dec .stt { font-size: 12px; color: var(--muted); }
 .quem { margin: 14px 2px 0; font-size: 13px; color: var(--muted); }
 .quem[hidden] { display: none; }
 .quem button { font: 600 13px var(--font); color: var(--bronze); background: none; border: 0; padding: 4px 6px; cursor: pointer; text-decoration: underline; }
@@ -219,6 +223,11 @@ footer { margin-top: 22px; font-size: 12px; color: var(--muted); text-align: cen
     <span id="nome-erro" role="alert" style="color:var(--bronze)"></span>
   </div>
   <p class="quem" id="quem" hidden></p>
+  <div class="nomebox" id="obrigado" hidden>
+    <b>Obrigado pela indicação!</b>
+    <span id="obrigado-txt"></span>
+    <div class="row"><button type="button" id="obrigado-ok">Ok</button></div>
+  </div>
   <p class="aviso" id="aviso"></p>
   <div id="lista" role="tabpanel"></div>
   <div class="nomebox" id="sugbox" hidden>
@@ -385,7 +394,7 @@ async function carregarSugestoes() {
     else if (!r.ok) throw new Error();
     else { sugErro = ""; sugestoes = (await r.json()).lista || []; }
   } catch (e) { sugErro = "Não consegui buscar as sugestões agora. Tente de novo."; sugestoes = []; }
-  $("#n-sug").textContent = sugestoes ? sugestoes.length : "";
+  $("#n-sug").textContent = sugestoes ? (sugestoes.filter((x) => x.status === "pendente").length || "") : "";
   render();
 }
 function visao() {
@@ -395,8 +404,9 @@ function visao() {
     if (sugestoes === null) return { aviso: "Buscando as sugestões...", grupos: [] };
     const por = {};
     for (const x of sugestoes) { const k = norm(x.titulo).replace(/\s+/g, " ").trim(); (por[k] = por[k] || { titulo: x.titulo, itens: [] }).itens.push(x); }
-    const itens = Object.values(por).sort((a, b) => b.itens[0].em.localeCompare(a.itens[0].em)).map((g) => [g.titulo, "por " + [...new Set(g.itens.map((x) => x.nome))].join(", ") + " · " + g.itens[0].em.slice(8, 10) + "/" + g.itens[0].em.slice(5, 7), "", g.itens.map((x) => x.motivo).filter(Boolean).join(" | ")]);
-    return { aviso: sugErro || (itens.length ? "Filmes que as clientes indicaram, do mais novo pro mais antigo." : "Ninguém indicou filme ainda."), grupos: [{ nome: "Indicações das clientes", itens }] };
+    const stDe = (g) => (g.itens.some((x) => x.status === "aprovada") ? "aprovada" : g.itens.every((x) => x.status === "recusada") ? "recusada" : "pendente");
+    const itens = Object.values(por).sort((a, b) => b.itens[0].em.localeCompare(a.itens[0].em)).map((g) => [g.titulo, "por " + [...new Set(g.itens.map((x) => x.nome))].join(", ") + " · " + g.itens[0].em.slice(8, 10) + "/" + g.itens[0].em.slice(5, 7), "", g.itens.map((x) => x.motivo).filter(Boolean).join(" | "), "", g.itens.map((x) => x.id), stDe(g)]);
+    return { aviso: sugErro || (itens.length ? "Aprovar manda o filme pro Quero ver e avisa a cliente. Não aprovar só mantém aqui, e ela não recebe nada." : "Ninguém indicou filme ainda."), grupos: [{ nome: "Indicações das clientes", itens }] };
   }
   if (view === "indicar") {
     const SEG = { "Comédia romântica": "Romance e comédia romântica", "Romance de época": "Romance e comédia romântica", "Ação": "Ação e faroeste", "Terror": "Terror e ação com comédia" };
@@ -413,7 +423,10 @@ function visao() {
     return { aviso: DATA.indicar.aviso, grupos };
   }
   if (view === "quero-ver") {
-    return { aviso: ver.aviso, grupos: ver.grupos.map((g) => ({ ...g, pick: g.pick && !votos[slug(g.pick[0])] ? g.pick : undefined, itens: g.itens.filter((i) => !votos[slug(i[0])]) })) };
+    const grupos = ver.grupos.map((g) => ({ ...g, pick: g.pick && !votos[slug(g.pick[0])] ? g.pick : undefined, itens: g.itens.filter((i) => !votos[slug(i[0])]) }));
+    const ap = aprovadasNovas().filter((t) => !votos[slug(t)]);
+    if (ap.length) grupos.push({ nome: "Indicados pelas clientes", itens: ap.map((t) => [t, "Indicação de cliente", "", ""]) });
+    return { aviso: ver.aviso, grupos };
   }
   const todos = ver.grupos.flatMap((g) => g.itens);
   return {
@@ -424,7 +437,8 @@ function visao() {
 function contadores() {
   const ver = DATA["quero-ver"].grupos.flatMap((g) => g.itens);
   const vistos = ver.filter((i) => votos[slug(i[0])]).length;
-  $("#n-ver").textContent = ver.length - vistos;
+  const nAp = aprovadasNovas().filter((t) => !votos[slug(t)]).length;
+  $("#n-ver").textContent = ver.length - vistos + nAp;
   $("#n-vis").textContent = vistos + VISTOS.length;
   $("#n-ind").textContent = count("indicar") + ver.filter((i) => votos[slug(i[0])] && votos[slug(i[0])].voto === "indicar").length;
   $("#resumo").textContent = (ver.length - vistos) + " pra assistir e " + count("indicar") + " que eu indico.";
@@ -454,6 +468,10 @@ function render() {
         } else {
           extra += `<div><button type="button" class="vistobtn" data-abrir="${id}" data-titulo="${esc(i[0])}">${vt ? "Mudar voto" : "Já vi"}</button></div>`;
         }
+      }
+      if (view === "sugestoes" && i[5]) {
+        const st = i[6], on = (k) => (st === k ? "on" : "");
+        extra += `<div class="dec" data-ids="${i[5].join(",")}"><button type="button" data-st="aprovada" class="${on("aprovada")}">👍 Aprovar</button><button type="button" data-st="recusada" class="${on("recusada")}">👎 Não aprovar</button><span class="stt">${st === "aprovada" ? "Aprovada: está no Quero ver" : st === "recusada" ? "Não aprovada: fica aqui só pra registro" : "Esperando sua decisão"}</span></div>`;
       }
       return `<li${cls ? ` class="${cls}"` : ""}><div class="t">${esc(i[0])}</div><div class="m"><span>${esc(i[1])}</span>${i[2] ? `<span class="rate">${esc(i[2])}</span>` : ""}</div>${descr(i) ? `<div class="d">${esc(descr(i))}</div>` : ""}${window.PUBLICO && view !== "vistos" ? estrelasHtml(i) : ""}${extra}</li>`;
     }).join("") + "</ul></details>";
@@ -519,12 +537,32 @@ function nomeUI() {
   $("#intro").hidden = !window.PUBLICO;
   $("#sugbox").hidden = !window.PUBLICO;
   const naSug = !window.PUBLICO && view === "sugestoes";
+  if (!window.PUBLICO) $("#obrigado").hidden = true; else mostrarAvisos(avisosPend);
   $("#nomebox").hidden = !(window.PUBLICO || naSug) || !!nome;
   $("#quem").hidden = !(window.PUBLICO || naSug) || !nome;
   $("#quem").innerHTML = nome ? `Oi, ${esc(nome)}. <button type="button" id="trocar">Não sou eu</button>` : "";
 }
 async function carregarMedias() {
   try { const r = await fetch(API + "/medias"); if (r.ok) { medias = await r.json(); render(); } } catch (e) {}
+}
+let avisosPend = [];
+function mostrarAvisos(av) {
+  avisosPend = av;
+  const box = $("#obrigado");
+  if (!window.PUBLICO || !av.length) { box.hidden = true; return; }
+  $("#obrigado-txt").textContent = av.length === 1 ? "Seu filme \"" + av[0] + "\" entrou na minha lista de interesses. Obrigado!" : "Seus filmes entraram na minha lista de interesses: " + av.join(", ") + ". Obrigado!";
+  box.hidden = false;
+}
+let aprovadas = [];
+async function carregarAprovadas() {
+  try { const r = await fetch(API + "/aprovadas"); if (r.ok) { aprovadas = await r.json(); render(); } } catch (e) {}
+}
+// Indicações aprovadas que ainda não estão nas listas (o Fabio as organiza depois).
+function aprovadasNovas() {
+  const base = new Set();
+  for (const k of ["quero-ver", "indicar"]) for (const g of DATA[k].grupos) for (const i of g.itens) { base.add(norm(i[0])); base.add(norm(i[0].replace(/\s*\(.*\)\s*$/, ""))); }
+  for (const i of VISTOS) { base.add(norm(i[0])); base.add(norm(i[0].replace(/\s*\(.*\)\s*$/, ""))); }
+  return aprovadas.filter((t) => !base.has(norm(t).trim()));
 }
 const sair = () => { nome = ""; pin = ""; minhas = {}; ls.set("frl-cinema-nome", ""); ls.set("frl-cinema-pin", ""); ls.set("frl-cinema-minhas", "{}"); };
 async function entrarNoApp(u, p, avisar) {
@@ -534,12 +572,13 @@ async function entrarNoApp(u, p, avisar) {
     if (!r.ok) throw new Error();
     const d = await r.json();
     nome = u; pin = p; minhas = d.votos || {};
+    mostrarAvisos(d.avisos || []);
     ls.set("frl-cinema-nome", u); ls.set("frl-cinema-pin", p); ls.set("frl-cinema-minhas", JSON.stringify(minhas));
     $("#nome-erro").textContent = ""; nomeUI(); render(); if (view === "sugestoes") carregarSugestoes();
   } catch (e) { if (avisar) $("#nome-erro").textContent = "Não consegui entrar agora. Tente de novo."; }
 }
 const REAL = !!window.PUBLICO;
-if (REAL || window.PESSOAL) carregarMedias();
+if (REAL || window.PESSOAL) { carregarMedias(); carregarAprovadas(); }
 if (REAL || window.PESSOAL) {
   nome = ls.get("frl-cinema-nome") || ""; pin = ls.get("frl-cinema-pin") || "";
   if (nome && !pin) nome = "";
@@ -554,6 +593,10 @@ if (REAL || window.PESSOAL) {
   };
   $("#nome-ok").addEventListener("click", entrar);
   $("#pin").addEventListener("keydown", (e) => { if (e.key === "Enter") entrar(); });
+  $("#obrigado-ok").addEventListener("click", async () => {
+    $("#obrigado").hidden = true; avisosPend = [];
+    try { await fetch(API + "/avisei", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin }) }); } catch (e) {}
+  });
   $("#sug-ok").addEventListener("click", async () => {
     const msg = $("#sug-msg"), t = $("#sug-titulo").value.trim();
     if (!nome) { msg.textContent = "Entre com seu nome de usuário e PIN lá em cima primeiro."; window.scrollTo({ top: 0, behavior: "smooth" }); $("#nome").focus(); return; }
@@ -570,6 +613,16 @@ if (REAL || window.PESSOAL) {
   });
   document.addEventListener("click", (e) => { if (e.target.id === "trocar") { sair(); nomeUI(); render(); $("#nome").focus(); } });
   $("#lista").addEventListener("click", async (e) => {
+    const dec = e.target.closest(".dec button");
+    if (dec) {
+      const ids = dec.parentElement.dataset.ids.split(",").map(Number);
+      try {
+        const r = await fetch(API + "/decidir", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ usuario: nome, pin, ids, status: dec.dataset.st }) });
+        if (!r.ok) throw new Error();
+        await carregarSugestoes(); carregarAprovadas();
+      } catch (err) { alert("Não consegui salvar agora. Tente de novo."); }
+      return;
+    }
     const b = e.target.closest(".est button");
     if (!b) return;
     if (!nome) { window.scrollTo({ top: 0, behavior: "smooth" }); $("#nome").focus(); return; }
