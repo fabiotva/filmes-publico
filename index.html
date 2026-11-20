@@ -331,7 +331,7 @@ const DATA = {
         ["Que Horas Eu Te Pego? (No Hard Feelings)", "EUA, 2023", "", "Já assisti e gostei. Comédia romântica mais atrevida, com a Jennifer Lawrence."],
         ["Amores à Parte (Splitsville)", "EUA, 2025", "", "Gostei bastante. Comédia muito louca, de roteiro muito bom e boas atuações, que surpreende. Uma comédia diferente e bem legal."],
       ]},
-      { nome: "Ação e faroeste", itens: [
+      { nome: "Ação", itens: [
         ["A Ladra Solitária (The Isolate Thief)", "EUA, 2026", "", "Faroeste de suspense na Guerra Civil, com Mackenzie Foy e Sean Bean. A crítica ficou dividida. É violento, avisar quem for ver."],
         ["Sisu", "Finlândia, 2022", "IMDb ~6,9", "Ação brutal e o mais leve dos de ação. Já tinha visto e gosto."],
         ["The Night Comes for Us", "Indonésia, 2018", "IMDb ~7,0", "Muito bom, muito violento, muito bem filmado e dirigido. Adorei. Avisar quem for ver: a violência é extrema."]
@@ -443,7 +443,7 @@ function visao() {
     return { aviso: sugErro || (itens.length ? "Aprovar manda o filme pro Quero ver e avisa a cliente. Não aprovar só mantém aqui, e ela não recebe nada." : "Ninguém indicou filme ainda."), grupos: [{ nome: "Indicações das clientes", itens }] };
   }
   if (view === "indicar") {
-    const SEG = { "Comédia romântica": "Romance e comédia romântica", "Romance de época": "Romance e comédia romântica", "Ação": "Ação e faroeste", "Terror": "Terror e ação com comédia" };
+    const SEG = { "Comédia romântica": "Romance e comédia romântica", "Romance de época": "Romance e comédia romântica", "Ação": "Ação", "Terror": "Terror e ação com comédia" };
     const grupos = DATA.indicar.grupos.map((g) => ({ ...g, itens: [...g.itens] }));
     for (const g of ver.grupos) {
       for (const i of g.itens) {
