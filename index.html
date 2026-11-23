@@ -1,13 +1,13 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="mobile-web-app-capable" content="yes">
 <style>.pickbtn,.pick{display:none!important}li.is-pick .t::after{content:none!important}</style>
 <script>window.PUBLICO = true;</script>
 <title>FRL Cinema</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#3A3D43">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="FRL Cinema">
+<meta name="apple-mobile-web-app-title" content="Filmes FRL">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%233A3D43'/%3E%3Crect x='34' y='48' width='112' height='84' rx='12' fill='none' stroke='%23F1EFEB' stroke-width='7'/%3E%3Cpath d='M78 70v40l34-20z' fill='%23C99763'/%3E%3Cg fill='%23F1EFEB'%3E%3Crect x='46' y='56' width='8' height='8' rx='2'/%3E%3Crect x='46' y='86' width='8' height='8' rx='2'/%3E%3Crect x='46' y='116' width='8' height='8' rx='2'/%3E%3Crect x='126' y='56' width='8' height='8' rx='2'/%3E%3Crect x='126' y='86' width='8' height='8' rx='2'/%3E%3Crect x='126' y='116' width='8' height='8' rx='2'/%3E%3C/g%3E%3C/svg%3E">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%233A3D43'/%3E%3Crect x='34' y='48' width='112' height='84' rx='12' fill='none' stroke='%23F1EFEB' stroke-width='7'/%3E%3Cpath d='M78 70v40l34-20z' fill='%23C99763'/%3E%3Cg fill='%23F1EFEB'%3E%3Crect x='46' y='56' width='8' height='8' rx='2'/%3E%3Crect x='46' y='86' width='8' height='8' rx='2'/%3E%3Crect x='46' y='116' width='8' height='8' rx='2'/%3E%3Crect x='126' y='56' width='8' height='8' rx='2'/%3E%3Crect x='126' y='86' width='8' height='8' rx='2'/%3E%3Crect x='126' y='116' width='8' height='8' rx='2'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&display=swap">
 <style>
 /* Layout: cabeçalho escuro em grafite com o logo e a contagem, abas em pílula, gêneros em cartões com fio de bronze.
@@ -731,4 +731,5 @@ window.addEventListener("hashchange", () => { const h = location.hash.slice(1); 
   } catch (e) { db = null; }
 })();
 </script>
+<script>if ("serviceWorker" in navigator) { navigator.serviceWorker.register("sw.js").catch(function () {}); }</script>
 </html>
